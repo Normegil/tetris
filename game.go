@@ -5,7 +5,7 @@ import (
 	"github.com/veandco/go-sdl2/sdl_ttf"
 )
 
-type game struct {}
+type game struct{}
 
 func newGame() *game {
 	return &game{}
@@ -24,21 +24,23 @@ func (g *game) run() error {
 	}
 	defer ttf.Quit()
 
+	f := fonts{}
+	defer f.Close()
+
 	win, err := newWindow("Tetris", sdl.Rect{}, sdl.WINDOW_SHOWN)
 	if nil != err {
 		return err
 	}
 	defer win.Destroy()
 
-	screen := MENU
-	return loop(loopCtrl{fpsControls{capped:true, number: 60}}, func(loop loopCtrl) (loopCtrl, error) {
-		screen, err = screen()
+	var screen screen
+	screen = MenuScreen{}
+	ctrl := loopCtrl{quit: false, fps: fpsControls{capped: true, number: 60}}
+	return loop(ctrl, func(loop loopCtrl) (loopCtrl, error) {
+		screen, err = screen.execute(win, &f)
 		if nil != err {
-			return nil, err
+			return loopCtrl{quit: true}, err
 		}
-		if NONE == screen {
-			return loopCtrl{quit:true}
-		}
-		return loop
+		return loopCtrl{quit:screen.quit(), fps:loop.fps}, nil
 	})
 }

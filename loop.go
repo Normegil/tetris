@@ -3,29 +3,40 @@ package main
 import "time"
 
 type loopCtrl struct {
-	fps fpsControls
+	fps  fpsControls
 	quit bool
 }
 
-type fpsControls struct{
+type fpsControls struct {
 	number int
 	capped bool
 }
 
-func loop(init loopCtrl, toExec func (loopCtrl) (loopCtrl, error)) error {
-	quit := init.quit
-	for(!quit) {
+func loop(init loopCtrl, toExec func(loopCtrl) (loopCtrl, error)) error {
+	ctrl := init
+	quit := ctrl.quit
+	for !quit {
 		beforeLoop := time.Now()
-		ctrl, err := toExec()
+		ctrl, err := toExec(ctrl)
 		if nil != err {
 			return err
 		}
 		quit = ctrl.quit
-		if (ctrl.fps.capped && !quit) {
+		if ctrl.fps.capped && !quit {
 			afterLoop := time.Now()
-			timeToWait := 1000 / ctrl.fps.number
-			time.Sleep(timeToWait - (afterLoop - beforeLoop))
+			time.Sleep(timeToSleep(ctrl.fps.number, beforeLoop, afterLoop))
 		}
 	}
 	return nil
+}
+
+func timeToSleep(framePerSeconds int, beforeLoop, afterLoop time.Time) time.Duration {
+	spentTime := time.Duration(toMilliseconds(afterLoop) - toMilliseconds(beforeLoop))
+	theoriticalTimeToWait := time.Duration(1000 / framePerSeconds)
+	timeToWait := theoriticalTimeToWait - spentTime
+	return timeToWait * time.Millisecond
+}
+
+func toMilliseconds(t time.Time) int64 {
+	return int64(time.Nanosecond) * t.UnixNano() / int64(time.Millisecond)
 }
