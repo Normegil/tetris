@@ -1,6 +1,9 @@
 package main
 
-import "github.com/veandco/go-sdl2/sdl"
+import (
+	"github.com/Sirupsen/logrus"
+	"github.com/veandco/go-sdl2/sdl"
+)
 
 type window struct {
 	*sdl.Window
@@ -8,12 +11,16 @@ type window struct {
 }
 
 func newWindow(title string, def sdl.Rect, flags uint32) (*window, error) {
+	logrus.WithFields(logrus.Fields{
+		"Title":         title,
+		"Position/Size": def,
+	}).Info("Creating Window")
 	win, err := sdl.CreateWindow(title, int(def.X), int(def.Y), int(def.W), int(def.H), flags)
 	if nil != err {
 		return nil, err
 	}
 
-	return &window{Window:win, render:nil}, nil
+	return &window{Window: win, render: nil}, nil
 }
 
 func (w *window) GetSize() Size {

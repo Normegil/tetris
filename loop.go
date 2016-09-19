@@ -1,6 +1,10 @@
 package main
 
-import "time"
+import (
+	"time"
+
+	"github.com/Sirupsen/logrus"
+)
 
 type loopCtrl struct {
 	fps  fpsControls
@@ -15,6 +19,7 @@ type fpsControls struct {
 func loop(init loopCtrl, toExec func(loopCtrl) (loopCtrl, error)) error {
 	ctrl := init
 	quit := ctrl.quit
+	logrus.WithField("Controls", ctrl).Debug("Launching main loop")
 	for !quit {
 		beforeLoop := time.Now()
 		ctrl, err := toExec(ctrl)
