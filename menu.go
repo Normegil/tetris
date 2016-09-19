@@ -5,18 +5,9 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-const (
-	FT_GAME_TITLE      string = "tusj.ttf"
-	FT_SIZE_GAME_TITLE        = 120
-	TITLE_Y                   = int32(200)
-	FT_ITEM            string = "anudrg.ttf"
-	FT_SIZE_ITEM              = 50
-	ITEMS_Y                   = int32(600)
-	ITEMS_SPACE               = 100
-)
-
 type MenuItem struct {
-	Name string
+	Name  string
+	ScrID ScreenID
 }
 
 type Menu struct {
@@ -25,16 +16,42 @@ type Menu struct {
 	selected int
 }
 
-func (m Menu) quit() bool {
-	return false
+func (m *Menu) execute(window *window, fonts *fonts) (ScreenID, error) {
+	scrID, err := m.handle(sdl.PollEvent())
+	if nil != err {
+		return SCR_NONE, err
+	} else if SCR_MAIN_MENU != scrID {
+		logrus.WithField("Next Screen", scrID).Info("Changing screen")
+		return scrID, nil
+	}
+
+	render, err := window.Renderer()
+	if nil != err {
+		return SCR_NONE, err
+	}
+	if err = render.Clear(); nil != err {
+		return SCR_NONE, err
+	}
+
+	if err = m.renderGameTitle(window, fonts); nil != err {
+		return SCR_NONE, err
+	}
+
+	if err = m.renderItems(window, fonts); nil != err {
+		return SCR_NONE, err
+	}
+
+	render.Present()
+
+	return SCR_MAIN_MENU, nil
 }
 
-func (m Menu) execute(window *window, fonts *fonts) (screen, error) {
-	if ev := sdl.PollEvent(); nil != ev {
+func (m *Menu) handle(ev sdl.Event) (ScreenID, error) {
+	if nil != ev {
 		switch ev.(type) {
 		case *sdl.QuitEvent:
 			logrus.Info("Quit event detected")
-			return DefaultScreen{}, nil
+			return SCR_NONE, nil
 		case *sdl.KeyDownEvent:
 			keyDownEvent := ev.(*sdl.KeyDownEvent)
 			switch keyDownEvent.Keysym.Sym {
@@ -48,48 +65,65 @@ func (m Menu) execute(window *window, fonts *fonts) (screen, error) {
 				if m.selected >= len(m.items) {
 					m.selected = 0
 				}
+			case sdl.K_KP_ENTER, sdl.K_RIGHT, sdl.K_RETURN:
+				return m.items[m.selected].ScrID, nil
 			}
 		}
 	}
+	return SCR_MAIN_MENU, nil
+}
 
-	gameTitleFont, err := fonts.load(FT_GAME_TITLE).size(FT_SIZE_GAME_TITLE)
+func (m *Menu) renderGameTitle(win *window, fonts *fonts) error {
+	const (
+		FT_GAME_TITLE      = "tusj.ttf"
+		FT_SIZE_GAME_TITLE = 120
+		TITLE_Y            = int32(200)
+	)
+
+	font, err := fonts.load(FT_GAME_TITLE).size(FT_SIZE_GAME_TITLE)
 	if nil != err {
-		return DefaultScreen{}, err
+		return err
 	}
 
-	itemFont, err := fonts.load(FT_ITEM).size(FT_SIZE_ITEM)
+	render, err := win.Renderer()
 	if nil != err {
-		return DefaultScreen{}, err
-	}
-
-	render, err := window.Renderer()
-	if nil != err {
-		return DefaultScreen{}, err
-	}
-
-	err = render.Clear()
-	if nil != err {
-		return DefaultScreen{}, err
+		return err
 	}
 
 	titleColor := sdl.Color{R: 255, G: 0, B: 0, A: 255}
-	title, err := render.Text(gameTitleFont, m.Title, titleColor)
+	title, err := render.Text(font, m.Title, titleColor)
 	if nil != err {
-		return DefaultScreen{}, err
+		return err
 	}
 	defer title.Close()
 
-	size := window.GetSize()
-	err = render.Copy(
+	winSize := win.GetSize()
+	return render.Copy(
 		title.Texture,
 		&sdl.Rect{W: title.W, H: title.H},
 		&sdl.Rect{
-			X: (size.W - title.W) / 2,
+			X: (winSize.W - title.W) / 2,
 			Y: TITLE_Y,
 			W: title.W,
 			H: title.H})
+}
+
+func (m *Menu) renderItems(win *window, fonts *fonts) error {
+	const (
+		FT_ITEM      = "anudrg.ttf"
+		FT_SIZE_ITEM = 50
+		ITEMS_Y      = int32(600)
+		ITEMS_SPACE  = 100
+	)
+
+	itemFont, err := fonts.load(FT_ITEM).size(FT_SIZE_ITEM)
 	if nil != err {
-		return DefaultScreen{}, err
+		return err
+	}
+
+	render, err := win.Renderer()
+	if nil != err {
+		return err
 	}
 
 	var textures []texture
@@ -102,13 +136,13 @@ func (m Menu) execute(window *window, fonts *fonts) (screen, error) {
 		}
 		texture, err := render.Text(itemFont, item.Name, color)
 		if nil != err {
-			return DefaultScreen{}, err
+			return err
 		}
 		defer texture.Close()
 		textures = append(textures, *texture)
 	}
 
-	itemsX := centerX(size.W, textures)
+	itemsX := centerX(win.GetSize().W, textures)
 	for i, texture := range textures {
 		err = render.Copy(
 			texture.Texture,
@@ -119,16 +153,10 @@ func (m Menu) execute(window *window, fonts *fonts) (screen, error) {
 				W: texture.W,
 				H: texture.H})
 		if nil != err {
-			return DefaultScreen{}, err
+			return err
 		}
 	}
-
-	if nil != err {
-		return DefaultScreen{}, err
-	}
-	render.Present()
-
-	return m, nil
+	return nil
 }
 
 func centerX(WinWidth int32, textures []texture) int32 {

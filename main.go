@@ -3,6 +3,9 @@ package main
 import (
 	"flag"
 
+	"math/rand"
+	"time"
+
 	"github.com/Sirupsen/logrus"
 )
 
@@ -13,6 +16,8 @@ func init() {
 	if *verbose {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
+
+	rand.Seed(time.Now().UnixNano())
 }
 
 func main() {

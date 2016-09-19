@@ -9,7 +9,7 @@ type renderer struct {
 	*sdl.Renderer
 }
 
-func (r *renderer) Text(font ttf.Font, text string, style sdl.Color) (*texture, error) {
+func (r *renderer) Text(font *ttf.Font, text string, style sdl.Color) (*texture, error) {
 	surface, err := font.RenderUTF8_Solid(text, style)
 	if nil != err {
 		return nil, err

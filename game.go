@@ -13,6 +13,8 @@ func newGame() *game {
 }
 
 func (g *game) run() error {
+	const FPS = 60
+
 	err := sdl.Init(sdl.INIT_VIDEO)
 	if nil != err {
 		return err
@@ -27,7 +29,7 @@ func (g *game) run() error {
 	defer ttf.Quit()
 	logrus.Debug("SDL(with TTF) Launched")
 
-	f := fonts{}
+	f := &fonts{}
 	defer f.Close()
 
 	win, err := newWindow("Tetris", sdl.Rect{
@@ -41,20 +43,14 @@ func (g *game) run() error {
 	}
 	defer win.Destroy()
 
-	var screen screen
-	screen = Menu{
-		Title: "Tetris",
-		items: []MenuItem{
-			{Name: "New Game"},
-			{Name: "Quit"},
-		},
-	}
-	ctrl := loopCtrl{quit: false, fps: fpsControls{capped: true, number: 60}}
+	screens := getScreens()
+	scrID := SCR_MAIN_MENU
+	ctrl := loopCtrl{quit: false, fps: fpsControls{capped: true, number: FPS}}
 	return loop(ctrl, func(loop loopCtrl) (loopCtrl, error) {
-		screen, err = screen.execute(win, &f)
+		scrID, err = screens[scrID].execute(win, f)
 		if nil != err {
 			return loopCtrl{quit: true}, err
 		}
-		return loopCtrl{quit: screen.quit(), fps: loop.fps}, nil
+		return loopCtrl{quit: SCR_NONE == scrID, fps: loop.fps}, nil
 	})
 }
