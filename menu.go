@@ -14,6 +14,8 @@ type Menu struct {
 	Title    string
 	items    []MenuItem
 	selected int
+
+	counter *FPSCounter
 }
 
 func (m *Menu) execute(window *window, fonts *fonts) (ScreenID, error) {
@@ -31,6 +33,12 @@ func (m *Menu) execute(window *window, fonts *fonts) (ScreenID, error) {
 	}
 	if err = render.Clear(); nil != err {
 		return SCR_NONE, err
+	}
+
+	if nil != m.counter {
+		if err = m.counter.display(render, fonts); nil != err {
+			return SCR_NONE, err
+		}
 	}
 
 	if err = m.renderGameTitle(window, fonts); nil != err {

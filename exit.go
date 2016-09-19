@@ -9,6 +9,8 @@ import (
 
 type ExitScreen struct {
 	msg string
+
+	counter *FPSCounter
 }
 
 func (e *ExitScreen) execute(window *window, fonts *fonts) (ScreenID, error) {
@@ -28,6 +30,12 @@ func (e *ExitScreen) execute(window *window, fonts *fonts) (ScreenID, error) {
 	err = render.Clear()
 	if nil != err {
 		return SCR_NONE, err
+	}
+
+	if nil != e.counter {
+		if err = e.counter.display(render, fonts); nil != err {
+			return SCR_NONE, err
+		}
 	}
 
 	if err = e.displayMsg(window, fonts); nil != err {
