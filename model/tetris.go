@@ -57,15 +57,18 @@ func (t *Tetris) Update() {
 
 func (t Tetris) needDownMove() bool {
 	gap := time.Duration(time.Now().UnixNano() - t.lastUpdated.UnixNano())
-	speed := time.Duration(t.DeletedLines / 10)
 	var gapBetweenUpdate time.Duration
-	if 0 == speed {
+	if 0 == t.Level() {
 		gapBetweenUpdate = time.Second
 	} else {
-		gapBetweenUpdate = time.Second / time.Duration(speed)
+		gapBetweenUpdate = time.Second / time.Duration(t.Level())
 	}
 
 	return gap > gapBetweenUpdate
+}
+
+func (t Tetris) Level() int {
+	return t.DeletedLines / 10
 }
 
 func (t Tetris) HasLost() bool {

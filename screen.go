@@ -29,9 +29,7 @@ func getScreens() map[ScreenID]screen {
 	screens[SCR_NONE] = DefaultScreen{}
 	screens[SCR_EXIT_DIALOG] = NewExitScreen(fpsCounter)
 	screens[SCR_MAIN_MENU] = NewMainMenu(fpsCounter)
-	screens[SCR_PLAY] = &Play{
-		counter: fpsCounter,
-	}
+	screens[SCR_PLAY] = NewPlayScreen(fpsCounter)
 	screens[SCR_OPTIONS] = NewOptionsMenu(fpsCounter)
 	return screens
 }

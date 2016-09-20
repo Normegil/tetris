@@ -74,8 +74,33 @@ func (r *Renderer) TextureSize(text string, style TextStyle) (Size, error) {
 	}, nil
 }
 
+func (r Renderer) GetDrawColor() (sdl.Color, error) {
+	red, g, b, a, err := r.Renderer.GetDrawColor()
+	if nil != err {
+		return sdl.Color{}, err
+	}
+	return sdl.Color{R: red, G: g, B: b, A: a}, nil
+}
+
 func (r *Renderer) SetDrawColor(color sdl.Color) error {
 	return r.Renderer.SetDrawColor(color.R, color.G, color.B, color.A)
+}
+
+func (r *Renderer) CustomDrawColor(color sdl.Color, toExec func() error) error {
+	oldColor, err := r.GetDrawColor()
+	if nil != err {
+		return err
+	}
+
+	if err = r.SetDrawColor(color); nil != err {
+		return err
+	}
+
+	if err = toExec(); nil != err {
+		return err
+	}
+
+	return r.SetDrawColor(oldColor)
 }
 
 func (r *Renderer) Close() {

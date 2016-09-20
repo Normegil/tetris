@@ -111,7 +111,7 @@ func (t Tetromino) Move(direction Direction) Tetromino {
 	return t
 }
 
-func (t Tetromino) Coordinates() []Coordinate {
+func (t Tetromino) AbsoluteCoordinates() []Coordinate {
 	var absolutes []Coordinate
 	switch t.Type {
 	case TETROMINO_O:
@@ -252,10 +252,10 @@ func (t Tetromino) Coordinates() []Coordinate {
 		switch t.angle {
 		case ANGLE_0, ANGLE_180:
 			absolutes = []Coordinate{
-				{X: -1, Y: 1},
 				{X: 0, Y: 0},
 				{X: 1, Y: 0},
-				{X: 1, Y: -1},
+				{X: 0, Y: 1},
+				{X: -1, Y: 1},
 			}
 		case ANGLE_90, ANGLE_270:
 			absolutes = []Coordinate{
@@ -266,7 +266,11 @@ func (t Tetromino) Coordinates() []Coordinate {
 			}
 		}
 	}
+	return absolutes
+}
 
+func (t Tetromino) Coordinates() []Coordinate {
+	absolutes := t.AbsoluteCoordinates()
 	return []Coordinate{
 		{X: t.coordinate.X + absolutes[0].X, Y: t.coordinate.Y + absolutes[0].Y},
 		{X: t.coordinate.X + absolutes[1].X, Y: t.coordinate.Y + absolutes[1].Y},
