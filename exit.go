@@ -11,9 +11,17 @@ type ExitScreen struct {
 	msg string
 
 	counter *FPSCounter
+	fonts   *fonts
 }
 
-func (e *ExitScreen) execute(window *window, fonts *fonts) (ScreenID, error) {
+func NewExitScreen(counter *FPSCounter) *ExitScreen {
+	return &ExitScreen{
+		counter: counter,
+		fonts:   &fonts{},
+	}
+}
+
+func (e *ExitScreen) Execute(win *window) (ScreenID, error) {
 	scrID, err := e.handle(sdl.PollEvent())
 	if nil != err {
 		return SCR_NONE, err
@@ -23,92 +31,72 @@ func (e *ExitScreen) execute(window *window, fonts *fonts) (ScreenID, error) {
 		return scrID, nil
 	}
 
-	render, err := window.Renderer()
-	if nil != err {
-		return SCR_NONE, err
-	}
-	err = render.Clear()
+	err = win.Renderer().Clear()
 	if nil != err {
 		return SCR_NONE, err
 	}
 
 	if nil != e.counter {
-		if err = e.counter.display(render, fonts); nil != err {
+		if err = e.counter.display(win.Renderer()); nil != err {
 			return SCR_NONE, err
 		}
 	}
 
-	if err = e.displayMsg(window, fonts); nil != err {
+	if err = e.displayMsg(win); nil != err {
 		return SCR_NONE, err
 	}
 
-	render.Present()
+	win.Renderer().Present()
 	return SCR_EXIT_DIALOG, nil
 }
 
-func (e *ExitScreen) displayMsg(window *window, fonts *fonts) error {
+func (e *ExitScreen) displayMsg(win *window) error {
 	msgs := []string{
 		"Too Hard for you ?",
 		"Already Quitting ?",
 		"Leaving us ?",
 	}
 
-	const FONT = "anudrg.ttf"
 	const FONT_SIZE = 100
-	font, err := fonts.load(FONT).size(FONT_SIZE)
-	if nil != err {
-		return err
-	}
-
-	render, err := window.Renderer()
-	if nil != err {
-		return err
-	}
-
-	color := sdl.Color{R: 255, G: 255, B: 255, A: 255}
 	if "" == e.msg {
 		e.msg = msgs[rand.Intn(len(msgs))]
 	}
-	msg, err := render.Text(font, e.msg, color)
+
+	exitTextStyle := TextStyle{
+		FontName: FONT_TUSJ,
+		FontSize: FONT_SIZE,
+		Color:    sdl.Color{R: 255, G: 255, B: 255, A: 255},
+	}
+	size, err := win.Renderer().TextureSize(e.msg, exitTextStyle)
 	if nil != err {
 		return err
 	}
-	defer msg.Close()
 
-	winSize := window.GetSize()
-	msgY := (winSize.H - FONT_SIZE) / 2
-	err = render.Copy(
-		msg.Texture,
-		&sdl.Rect{W: msg.W, H: msg.H},
-		&sdl.Rect{
-			X: (winSize.W - msg.W) / 2,
+	msgY := (win.GetSize().H - FONT_SIZE) / 2
+	err = win.render.Text(e.msg, TextStyleWithPos{
+		TextStyle: exitTextStyle,
+		Position: sdl.Point{
+			X: (win.GetSize().W - size.W) / 2,
 			Y: msgY,
-			W: msg.W,
-			H: msg.H})
-	if nil != err {
-		return err
-	}
-
-	font, err = fonts.load(FONT).size(80)
-	if nil != err {
-		return err
-	}
-	possibilities, err := render.Text(font, "( y / N )", color)
-	if nil != err {
-		return err
-	}
-	defer possibilities.Close()
-
-	return render.Copy(
-		possibilities.Texture,
-		&sdl.Rect{W: possibilities.W, H: possibilities.H},
-		&sdl.Rect{
-			X: (winSize.W - possibilities.W) / 2,
-			Y: msgY + 120,
-			W: possibilities.W,
-			H: possibilities.H,
 		},
-	)
+	})
+	if nil != err {
+		return err
+	}
+
+	choices := "( y / N )"
+	exitTextStyle.FontSize = 80
+	choiceSize, err := win.Renderer().TextureSize(choices, exitTextStyle)
+	if nil != err {
+		return err
+	}
+	return win.Renderer().Text(choices, TextStyleWithPos{
+		TextStyle: exitTextStyle,
+		Position: sdl.Point{
+			X: (win.GetSize().W - choiceSize.W) / 2,
+			Y: msgY + 120,
+		},
+	})
 }
 
 func (e *ExitScreen) handle(ev sdl.Event) (ScreenID, error) {

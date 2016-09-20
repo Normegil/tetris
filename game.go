@@ -29,15 +29,12 @@ func (g *game) run() error {
 	defer ttf.Quit()
 	logrus.Debug("SDL(with TTF) Launched")
 
-	f := &fonts{}
-	defer f.Close()
-
 	win, err := newWindow("Tetris", sdl.Rect{
 		X: sdl.WINDOWPOS_UNDEFINED,
 		Y: sdl.WINDOWPOS_UNDEFINED,
 		W: 640,
 		H: 480,
-	}, sdl.WINDOW_SHOWN|sdl.WINDOW_FULLSCREEN_DESKTOP)
+	}, sdl.WINDOW_SHOWN|sdl.WINDOW_FULLSCREEN_DESKTOP, sdl.RENDERER_ACCELERATED)
 	if nil != err {
 		return err
 	}
@@ -47,7 +44,7 @@ func (g *game) run() error {
 	scrID := SCR_MAIN_MENU
 	ctrl := loopCtrl{quit: false, fps: fpsControls{capped: true, number: FPS}}
 	return loop(ctrl, func(loop loopCtrl) (loopCtrl, error) {
-		scrID, err = screens[scrID].execute(win, f)
+		scrID, err = screens[scrID].Execute(win)
 		if nil != err {
 			return loopCtrl{quit: true}, err
 		}

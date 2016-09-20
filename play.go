@@ -6,7 +6,7 @@ type Play struct {
 	counter *FPSCounter
 }
 
-func (p *Play) execute(window *window, fonts *fonts) (ScreenID, error) {
+func (p *Play) Execute(win *window) (ScreenID, error) {
 	scrID, err := p.handle(sdl.PollEvent())
 	if nil != err {
 		return SCR_NONE, err
@@ -14,19 +14,17 @@ func (p *Play) execute(window *window, fonts *fonts) (ScreenID, error) {
 		return scrID, nil
 	}
 
-	render, err := window.Renderer()
-	if nil != err {
+	if err = win.Renderer().Clear(); nil != err {
 		return SCR_NONE, err
 	}
-	render.Clear()
 
 	if nil != p.counter {
-		if err = p.counter.display(render, fonts); nil != err {
+		if err = p.counter.display(win.Renderer()); nil != err {
 			return SCR_NONE, err
 		}
 	}
 
-	render.Present()
+	win.Renderer().Present()
 	return SCR_PLAY, nil
 }
 

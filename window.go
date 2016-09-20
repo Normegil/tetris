@@ -7,20 +7,28 @@ import (
 
 type window struct {
 	*sdl.Window
-	render *renderer
+	render *Renderer
 }
 
-func newWindow(title string, def sdl.Rect, flags uint32) (*window, error) {
+func newWindow(title string, def sdl.Rect, winFlags uint32, rendererFlags uint32) (*window, error) {
 	logrus.WithFields(logrus.Fields{
 		"Title":         title,
 		"Position/Size": def,
 	}).Info("Creating Window")
-	win, err := sdl.CreateWindow(title, int(def.X), int(def.Y), int(def.W), int(def.H), flags)
+	sdlWindow, err := sdl.CreateWindow(title, int(def.X), int(def.Y), int(def.W), int(def.H), winFlags)
 	if nil != err {
 		return nil, err
 	}
+	window := &window{Window: sdlWindow, render: nil}
 
-	return &window{Window: win, render: nil}, nil
+	render, err := sdl.CreateRenderer(window.Window, -1, rendererFlags)
+	if nil != err {
+		return nil, err
+	}
+	window.render = NewRenderer(render)
+	window.render.SetDrawColor(sdl.Color{R: 0, G: 0, B: 0, A: 255})
+
+	return window, nil
 }
 
 func (w *window) GetSize() Size {
@@ -31,16 +39,8 @@ func (w *window) GetSize() Size {
 	}
 }
 
-func (w *window) Renderer() (*renderer, error) {
-	if nil == w.render {
-		render, err := sdl.CreateRenderer(w.Window, -1, sdl.RENDERER_ACCELERATED)
-		if nil != err {
-			return nil, err
-		}
-		w.render = &renderer{render}
-		w.render.SetDrawColor(sdl.Color{R: 0, G: 0, B: 0, A: 255})
-	}
-	return w.render, nil
+func (w *window) Renderer() *Renderer {
+	return w.render
 }
 
 func (w *window) Close() {

@@ -9,6 +9,11 @@ type fonts struct {
 	cache []*font
 }
 
+const (
+	FONT_TUSJ   = "tusj.ttf"
+	FONT_ANUDRG = "anudrg.ttf"
+)
+
 func (f *fonts) load(path string) *font {
 	for _, font := range f.cache {
 		if path == font.path {

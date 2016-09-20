@@ -13,31 +13,34 @@ type FPSCounter struct {
 	result         string
 }
 
-func (f *FPSCounter) display(render *renderer, fonts *fonts) error {
-	const FONT = "capture-it.ttf"
-	now := time.Now()
-	if int64(time.Second/2) < now.UnixNano()-f.lastCalculated.UnixNano() {
-		f.lastCalculated = now
-		timePassed := now.UnixNano() - f.lastTick.UnixNano()
-		fps := float32(time.Second) / float32(timePassed)
-		f.result = fmt.Sprintf("%.2g", fps)
-	} else if "" == f.result {
-		f.result = " "
+func NewCounter() *FPSCounter {
+	return &FPSCounter{
+		lastTick:       time.Now(),
+		lastCalculated: time.Now(),
 	}
-	font, err := fonts.load(FONT).size(40)
-	if nil != err {
-		return err
-	}
-	text, err := render.Text(font, f.result, sdl.Color{R: 0, G: 255, B: 255, A: 255})
-	if nil != err {
-		return err
-	}
-	defer text.Close()
+}
 
-	err = render.Copy(text.Texture, &sdl.Rect{W: text.W, H: text.H}, &sdl.Rect{X: 5, Y: 5, W: text.W, H: text.H})
-	if nil != err {
-		return err
+func (s *FPSCounter) display(render *Renderer) error {
+	now := time.Now()
+	if int64(time.Second/4) < now.UnixNano()-s.lastCalculated.UnixNano() {
+		s.lastCalculated = now
+		timePassed := now.UnixNano() - s.lastTick.UnixNano()
+		fps := float32(time.Second) / float32(timePassed)
+		s.result = fmt.Sprintf("%.2g", fps)
+	} else if "" == s.result {
+		s.result = " "
 	}
-	f.lastTick = now
-	return nil
+	err := render.Text(s.result, TextStyleWithPos{
+		TextStyle: TextStyle{
+			FontName: "capture-it.ttf",
+			FontSize: 40,
+			Color:    sdl.Color{R: 0, G: 255, B: 255, A: 255},
+		},
+		Position: sdl.Point{
+			X: 10,
+			Y: 10,
+		},
+	})
+	s.lastTick = now
+	return err
 }
