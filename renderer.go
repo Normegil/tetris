@@ -103,6 +103,10 @@ func (r *Renderer) CustomDrawColor(color sdl.Color, toExec func() error) error {
 	return r.SetDrawColor(oldColor)
 }
 
+func (r *Renderer) DrawLine(source sdl.Point, target sdl.Point) error {
+	return r.Renderer.DrawLine(int(source.X), int(source.Y), int(target.X), int(target.Y))
+}
+
 func (r *Renderer) Close() {
 	r.Renderer.Destroy()
 }

@@ -19,14 +19,14 @@ func NewTetris() *Tetris {
 
 		CurrentTetromino: Tetromino{
 			Type: randomTetrominoType(),
-			coordinate: Coordinate{
+			Center: Coordinate{
 				X: 5,
 				Y: 0,
 			},
 		},
 		NextTetromino: Tetromino{
 			Type: randomTetrominoType(),
-			coordinate: Coordinate{
+			Center: Coordinate{
 				X: 5,
 				Y: 0,
 			},
@@ -44,7 +44,7 @@ func (t *Tetris) Update() {
 			t.CurrentTetromino = t.NextTetromino
 			t.NextTetromino = Tetromino{
 				Type: randomTetrominoType(),
-				coordinate: Coordinate{
+				Center: Coordinate{
 					X: 5,
 					Y: 0,
 				},

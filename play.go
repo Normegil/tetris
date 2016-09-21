@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	SQUARE_WIDTH  = 40
-	SQUARE_HEIGHT = 40
+	SQUARE_WIDTH  = 60
+	SQUARE_HEIGHT = 60
 )
 
 type Play struct {
@@ -87,6 +87,53 @@ func (p Play) displayGame(win *window) error {
 	if nil != err {
 		return err
 	}
+	return p.displayBoard(win)
+}
+
+func (p Play) displayBoard(win *window) error {
+	start := sdl.Point{
+		X: 1000,
+		Y: 250,
+	}
+
+	Once(func() {
+		logrus.Debug("Display Board")
+	})()
+	err := win.Renderer().CustomDrawColor(sdl.Color{255, 255, 255, 255}, func() error {
+		return win.Renderer().DrawLines([]sdl.Point{
+			start,
+			{X: start.X, Y: start.Y + 22*(SQUARE_HEIGHT+1)},
+			{X: start.X + 10*(SQUARE_WIDTH+1) + 1, Y: start.Y + 22*(SQUARE_HEIGHT+1)},
+			{X: start.X + 10*(SQUARE_WIDTH+1) + 1, Y: start.Y},
+		})
+	})
+	if nil != err {
+		return err
+	}
+
+	err = win.Renderer().CustomDrawColor(sdl.Color{R: 255, A: 255}, func() error {
+		return win.Renderer().DrawLine(sdl.Point{
+			X: start.X,
+			Y: start.Y + 2*(SQUARE_HEIGHT+1),
+		}, sdl.Point{
+			X: start.X + 10*(SQUARE_WIDTH+1) + 1,
+			Y: start.Y + 2*(SQUARE_HEIGHT+1),
+		})
+	})
+	if nil != err {
+		return err
+	}
+
+	tetromino := p.tetris.CurrentTetromino
+	coord := tetromino.Center
+	err = p.displayTetromino(win, tetromino, sdl.Point{
+		X: start.X + int32(1+coord.X*(SQUARE_WIDTH+1)),
+		Y: start.Y + int32(1+coord.Y*(SQUARE_HEIGHT+1)),
+	})
+	if nil != err {
+		return err
+	}
+
 	return nil
 }
 
@@ -96,25 +143,13 @@ func (p Play) displayNextTetromino(win *window) error {
 		Y: 1200,
 	}
 
-	startPoint := sdl.Point{
+	tetromino := p.tetris.NextTetromino
+	err := p.displayTetromino(win, tetromino, sdl.Point{
 		X: rectCoord.X + 2*(SQUARE_WIDTH+1),
 		Y: rectCoord.Y + 2*(SQUARE_HEIGHT+1),
-	}
-
-	tetromino := p.tetris.NextTetromino
-	for _, coordinate := range tetromino.AbsoluteCoordinates() {
-		color := model.GetColor(tetromino.Type)
-		point := sdl.Point{
-			X: startPoint.X + int32(coordinate.X*(SQUARE_WIDTH+1)),
-			Y: startPoint.Y + int32(coordinate.Y*(SQUARE_HEIGHT+1)),
-		}
-		err := p.displayBlock(win, point, sdl.Color{R: color.R, G: color.G, B: color.B, A: color.A})
-		Once(func() {
-			logrus.WithField("Rect Coord", point).WithField("Start", startPoint).Debug("Display Tetromino")
-		})()
-		if nil != err {
-			return err
-		}
+	})
+	if nil != err {
+		return err
 	}
 
 	return win.Renderer().CustomDrawColor(sdl.Color{255, 255, 255, 255}, func() error {
@@ -126,6 +161,21 @@ func (p Play) displayNextTetromino(win *window) error {
 		}
 		return win.Renderer().DrawRect(&rect)
 	})
+}
+
+func (p Play) displayTetromino(win *window, tetromino model.Tetromino, drawingCoordinates sdl.Point) error {
+	for _, coordinate := range tetromino.AbsoluteCoordinates() {
+		color := model.GetColor(tetromino.Type)
+		point := sdl.Point{
+			X: drawingCoordinates.X + int32(coordinate.X*(SQUARE_WIDTH+1)),
+			Y: drawingCoordinates.Y + int32(coordinate.Y*(SQUARE_HEIGHT+1)),
+		}
+		err := p.displayBlock(win, point, sdl.Color{R: color.R, G: color.G, B: color.B, A: color.A})
+		if nil != err {
+			return err
+		}
+	}
+	return nil
 }
 
 func (p Play) displayBlock(win *window, point sdl.Point, color sdl.Color) error {

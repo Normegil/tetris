@@ -66,8 +66,8 @@ const (
 type Tetromino struct {
 	Type TetrominoType
 
-	coordinate Coordinate
-	angle      Angle
+	Center Coordinate
+	angle  Angle
 }
 
 func (t Tetromino) Rotate(rotation Rotation) Tetromino {
@@ -102,11 +102,11 @@ func (t Tetromino) Rotate(rotation Rotation) Tetromino {
 
 func (t Tetromino) Move(direction Direction) Tetromino {
 	if DIRECTION_LEFT == direction {
-		t.coordinate.X -= 1
+		t.Center.X -= 1
 	} else if DIRECTION_RIGHT == direction {
-		t.coordinate.X += 1
+		t.Center.X += 1
 	} else if DIRECTION_DOWN == direction {
-		t.coordinate.Y += 1
+		t.Center.Y += 1
 	}
 	return t
 }
@@ -272,9 +272,9 @@ func (t Tetromino) AbsoluteCoordinates() []Coordinate {
 func (t Tetromino) Coordinates() []Coordinate {
 	absolutes := t.AbsoluteCoordinates()
 	return []Coordinate{
-		{X: t.coordinate.X + absolutes[0].X, Y: t.coordinate.Y + absolutes[0].Y},
-		{X: t.coordinate.X + absolutes[1].X, Y: t.coordinate.Y + absolutes[1].Y},
-		{X: t.coordinate.X + absolutes[2].X, Y: t.coordinate.Y + absolutes[2].Y},
-		{X: t.coordinate.X + absolutes[3].X, Y: t.coordinate.Y + absolutes[3].Y},
+		{X: t.Center.X + absolutes[0].X, Y: t.Center.Y + absolutes[0].Y},
+		{X: t.Center.X + absolutes[1].X, Y: t.Center.Y + absolutes[1].Y},
+		{X: t.Center.X + absolutes[2].X, Y: t.Center.Y + absolutes[2].Y},
+		{X: t.Center.X + absolutes[3].X, Y: t.Center.Y + absolutes[3].Y},
 	}
 }
