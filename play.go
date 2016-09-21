@@ -71,6 +71,14 @@ func (p *Play) handle(ev sdl.Event) (ScreenID, error) {
 			switch kdEvent.Keysym.Sym {
 			case sdl.K_ESCAPE:
 				return SCR_MAIN_MENU, nil
+			case sdl.K_UP:
+				p.tetris.Rotate(model.ROTATION_CLOCK)
+			case sdl.K_RIGHT:
+				p.tetris.Move(model.DIRECTION_RIGHT)
+			case sdl.K_LEFT:
+				p.tetris.Move(model.DIRECTION_LEFT)
+			case sdl.K_DOWN:
+				p.tetris.Move(model.DIRECTION_DOWN)
 			}
 		}
 	}
@@ -134,6 +142,20 @@ func (p Play) displayBoard(win *window) error {
 		return err
 	}
 
+	for _, square := range p.tetris.Board.Squares {
+		err = p.displayBlock(win, sdl.Point{
+			X: start.X + int32(1+square.X*(SQUARE_WIDTH+1)),
+			Y: start.Y + int32(1+square.Y*(SQUARE_HEIGHT+1)),
+		}, sdl.Color{
+			R: square.Color.R,
+			G: square.Color.G,
+			B: square.Color.B,
+			A: square.Color.A,
+		})
+		if nil != err {
+			return err
+		}
+	}
 	return nil
 }
 

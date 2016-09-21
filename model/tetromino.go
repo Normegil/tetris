@@ -211,7 +211,7 @@ func (t Tetromino) AbsoluteCoordinates() []Coordinate {
 			}
 		case ANGLE_90:
 			absolutes = []Coordinate{
-				{X: 0, Y: -1},
+				{X: 0, Y: 0},
 				{X: 0, Y: -1},
 				{X: 0, Y: 1},
 				{X: -1, Y: 1},

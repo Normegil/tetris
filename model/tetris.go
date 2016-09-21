@@ -1,12 +1,9 @@
 package model
 
-import (
-	"time"
-)
+import "time"
 
 type Tetris struct {
 	Board            Board
-	DeletedLines     int
 	CurrentTetromino Tetromino
 	NextTetromino    Tetromino
 
@@ -39,19 +36,11 @@ func (t *Tetris) Update() {
 	if t.needDownMove() {
 		tempTetromino := t.CurrentTetromino.Move(DIRECTION_DOWN)
 		if t.Board.DetectCollision(tempTetromino) {
-			t.Board.AddSquares(t.CurrentTetromino)
-			t.DeletedLines += t.Board.RemoveFullLines()
-			t.CurrentTetromino = t.NextTetromino
-			t.NextTetromino = Tetromino{
-				Type: randomTetrominoType(),
-				Center: Coordinate{
-					X: 5,
-					Y: 0,
-				},
-			}
+			t.handleDownCollision()
 		} else {
 			t.CurrentTetromino = tempTetromino
 		}
+		t.lastUpdated = time.Now()
 	}
 }
 
@@ -59,7 +48,7 @@ func (t Tetris) needDownMove() bool {
 	gap := time.Duration(time.Now().UnixNano() - t.lastUpdated.UnixNano())
 	var gapBetweenUpdate time.Duration
 	if 0 == t.Level() {
-		gapBetweenUpdate = time.Second
+		gapBetweenUpdate = time.Second / 2
 	} else {
 		gapBetweenUpdate = time.Second / time.Duration(t.Level())
 	}
@@ -67,8 +56,37 @@ func (t Tetris) needDownMove() bool {
 	return gap > gapBetweenUpdate
 }
 
+func (t *Tetris) Rotate(rotation Rotation) {
+	temp := t.CurrentTetromino.Rotate(rotation)
+	if !t.Board.DetectCollision(temp) {
+		t.CurrentTetromino = temp
+	}
+}
+
+func (t *Tetris) Move(direction Direction) {
+	temp := t.CurrentTetromino.Move(direction)
+	if !t.Board.DetectCollision(temp) {
+		t.CurrentTetromino = temp
+	} else if DIRECTION_DOWN == direction {
+		t.handleDownCollision()
+	}
+}
+
+func (t *Tetris) handleDownCollision() {
+	t.Board = t.Board.AddSquares(t.CurrentTetromino)
+	t.Board.RemoveFullLines()
+	t.CurrentTetromino = t.NextTetromino
+	t.NextTetromino = Tetromino{
+		Type: randomTetrominoType(),
+		Center: Coordinate{
+			X: 5,
+			Y: 0,
+		},
+	}
+}
+
 func (t Tetris) Level() int {
-	return t.DeletedLines / 10
+	return t.Board.RemovedLines / 10
 }
 
 func (t Tetris) HasLost() bool {
