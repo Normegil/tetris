@@ -9,6 +9,12 @@
 			"revisionTime": "2016-08-13T15:40:05Z"
 		},
 		{
+			"checksumSHA1": "EuYgyHzCqqFmfWtO1NG25rnVwUk=",
+			"path": "github.com/normegil/sdl",
+			"revision": "f598c1a7216347bfdd3a9de60f8aeb32f950e0a5",
+			"revisionTime": "2016-09-22T14:29:21Z"
+		},
+		{
 			"checksumSHA1": "CJ7VwI7LmfXSiZA4WtNeBGOoSAw=",
 			"path": "github.com/veandco/go-sdl2/sdl",
 			"revision": "0c7e4577f34a4f8a191c0d6b9b8944049ace8ec8",
