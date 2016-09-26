@@ -9,6 +9,11 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
+const (
+	FONT_TUSJ   = "tusj.ttf"
+	FONT_ANUDRG = "anudrg.ttf"
+)
+
 func init() {
 	verbose := flag.Bool("v", false, "Verbose mode will display all debug informations")
 	flag.Parse()

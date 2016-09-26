@@ -1,14 +1,19 @@
 package main
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/normegil/sdl"
+	"github.com/normegil/sdl/games"
+)
 
 type screen interface {
-	Execute(*window) (ScreenID, error)
+	Execute(*sdl.Window) (ScreenID, error)
 }
 
 type DefaultScreen struct{}
 
-func (d DefaultScreen) Execute(*window) (ScreenID, error) {
+func (d DefaultScreen) Execute(*sdl.Window) (ScreenID, error) {
 	return SCR_NONE, errors.New("Screen 'NONE' not meant to be used")
 }
 
@@ -23,7 +28,7 @@ const (
 )
 
 func getScreens() map[ScreenID]screen {
-	fpsCounter := NewCounter()
+	fpsCounter := games.NewLimitedFPSCounter()
 
 	screens := make(map[ScreenID]screen)
 	screens[SCR_NONE] = DefaultScreen{}

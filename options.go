@@ -1,8 +1,12 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/Sirupsen/logrus"
-	"github.com/veandco/go-sdl2/sdl"
+	"github.com/normegil/sdl"
+	"github.com/normegil/sdl/games"
+	sdl2 "github.com/veandco/go-sdl2/sdl"
 )
 
 type OptionsMenu struct {
@@ -10,10 +14,10 @@ type OptionsMenu struct {
 	subTitle MenuSubTitle
 	items    []MenuItem
 
-	counter *FPSCounter
+	counter games.FPSCounter
 }
 
-func NewOptionsMenu(counter *FPSCounter) *OptionsMenu {
+func NewOptionsMenu(counter games.FPSCounter) *OptionsMenu {
 	return &OptionsMenu{
 		title:    MenuMainTitle{"Tetris"},
 		subTitle: MenuSubTitle{"Options"},
@@ -27,8 +31,8 @@ func NewOptionsMenu(counter *FPSCounter) *OptionsMenu {
 	}
 }
 
-func (s *OptionsMenu) Execute(win *window) (ScreenID, error) {
-	scrID, err := s.handle(sdl.PollEvent())
+func (s *OptionsMenu) Execute(win *sdl.Window) (ScreenID, error) {
+	scrID, err := s.handle(sdl2.PollEvent())
 	if nil != err {
 		return SCR_NONE, err
 	} else if SCR_OPTIONS != scrID {
@@ -40,7 +44,14 @@ func (s *OptionsMenu) Execute(win *window) (ScreenID, error) {
 	}
 
 	if nil != s.counter {
-		if err = s.counter.display(win.Renderer()); nil != err {
+		nbFps := s.counter.FPS()
+		err = win.Renderer().Text(fmt.Sprintf("%g", nbFps), sdl.TextStyleWithPos{
+			Position: sdl2.Point{
+				X: 10,
+				Y: 10,
+			},
+		})
+		if nil != err {
 			return SCR_NONE, err
 		}
 	}
@@ -54,9 +65,9 @@ func (s *OptionsMenu) Execute(win *window) (ScreenID, error) {
 		return SCR_NONE, err
 	}
 
-	itemsX := (win.GetSize().W - 400) / 2
+	itemsX := (win.Size().W - 400) / 2
 	for i, item := range s.items {
-		item.Render(win, sdl.Point{
+		item.Render(win, sdl2.Point{
 			X: itemsX,
 			Y: s.title.Y() + subtitleY + int32(100+i*80),
 		})
@@ -67,22 +78,22 @@ func (s *OptionsMenu) Execute(win *window) (ScreenID, error) {
 	return SCR_OPTIONS, nil
 }
 
-func (s *OptionsMenu) handle(ev sdl.Event) (ScreenID, error) {
+func (s *OptionsMenu) handle(ev sdl2.Event) (ScreenID, error) {
 	if nil != ev {
 		switch ev.(type) {
-		case *sdl.QuitEvent:
+		case *sdl2.QuitEvent:
 			logrus.Info("Quit event detected")
 			return SCR_NONE, nil
-		case *sdl.KeyDownEvent:
-			keyDownEvent := ev.(*sdl.KeyDownEvent)
+		case *sdl2.KeyDownEvent:
+			keyDownEvent := ev.(*sdl2.KeyDownEvent)
 			switch keyDownEvent.Keysym.Sym {
-			case sdl.K_ESCAPE:
+			case sdl2.K_ESCAPE:
 				return SCR_MAIN_MENU, nil
-			case sdl.K_UP:
+			case sdl2.K_UP:
 
-			case sdl.K_DOWN:
+			case sdl2.K_DOWN:
 
-			case sdl.K_KP_ENTER, sdl.K_RETURN:
+			case sdl2.K_KP_ENTER, sdl2.K_RETURN:
 
 			}
 		}

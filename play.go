@@ -4,8 +4,10 @@ import (
 	"fmt"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/normegil/sdl"
+	"github.com/normegil/sdl/games"
 	"github.com/normegil/tetris/model"
-	"github.com/veandco/go-sdl2/sdl"
+	sdl2 "github.com/veandco/go-sdl2/sdl"
 )
 
 const (
@@ -16,18 +18,18 @@ const (
 type Play struct {
 	tetris *model.Tetris
 
-	counter *FPSCounter
+	counter games.FPSCounter
 }
 
-func NewPlayScreen(counter *FPSCounter) *Play {
+func NewPlayScreen(counter games.FPSCounter) *Play {
 	return &Play{
 		counter: counter,
 		tetris:  model.NewTetris(),
 	}
 }
 
-func (p *Play) Execute(win *window) (ScreenID, error) {
-	scrID, err := p.handle(sdl.PollEvent())
+func (p *Play) Execute(win *sdl.Window) (ScreenID, error) {
+	scrID, err := p.handle(sdl2.PollEvent())
 	if nil != err {
 		return SCR_NONE, err
 	} else if SCR_PLAY != scrID {
@@ -52,7 +54,14 @@ func (p *Play) Execute(win *window) (ScreenID, error) {
 	}
 
 	if nil != p.counter {
-		if err = p.counter.display(win.Renderer()); nil != err {
+		nbFps := p.counter.FPS()
+		err = win.Renderer().Text(fmt.Sprintf("%g", nbFps), sdl.TextStyleWithPos{
+			Position: sdl2.Point{
+				X: 10,
+				Y: 10,
+			},
+		})
+		if nil != err {
 			return SCR_NONE, err
 		}
 	}
@@ -61,23 +70,23 @@ func (p *Play) Execute(win *window) (ScreenID, error) {
 	return SCR_PLAY, nil
 }
 
-func (p *Play) handle(ev sdl.Event) (ScreenID, error) {
+func (p *Play) handle(ev sdl2.Event) (ScreenID, error) {
 	if nil != ev {
 		switch ev.(type) {
-		case *sdl.QuitEvent:
+		case *sdl2.QuitEvent:
 			return SCR_NONE, nil
-		case *sdl.KeyDownEvent:
-			kdEvent := ev.(*sdl.KeyDownEvent)
+		case *sdl2.KeyDownEvent:
+			kdEvent := ev.(*sdl2.KeyDownEvent)
 			switch kdEvent.Keysym.Sym {
-			case sdl.K_ESCAPE:
+			case sdl2.K_ESCAPE:
 				return SCR_MAIN_MENU, nil
-			case sdl.K_UP:
+			case sdl2.K_UP:
 				p.tetris.Rotate(model.ROTATION_CLOCK)
-			case sdl.K_RIGHT:
+			case sdl2.K_RIGHT:
 				p.tetris.Move(model.DIRECTION_RIGHT)
-			case sdl.K_LEFT:
+			case sdl2.K_LEFT:
 				p.tetris.Move(model.DIRECTION_LEFT)
-			case sdl.K_DOWN:
+			case sdl2.K_DOWN:
 				p.tetris.Move(model.DIRECTION_DOWN)
 			}
 		}
@@ -85,7 +94,7 @@ func (p *Play) handle(ev sdl.Event) (ScreenID, error) {
 	return SCR_PLAY, nil
 }
 
-func (p Play) displayGame(win *window) error {
+func (p Play) displayGame(win *sdl.Window) error {
 	err := p.displayLevel(win)
 	if nil != err {
 		return err
@@ -98,8 +107,8 @@ func (p Play) displayGame(win *window) error {
 	return p.displayBoard(win)
 }
 
-func (p Play) displayBoard(win *window) error {
-	start := sdl.Point{
+func (p Play) displayBoard(win *sdl.Window) error {
+	start := sdl2.Point{
 		X: 1000,
 		Y: 250,
 	}
@@ -107,34 +116,30 @@ func (p Play) displayBoard(win *window) error {
 	Once(func() {
 		logrus.Debug("Display Board")
 	})()
-	err := win.Renderer().CustomDrawColor(sdl.Color{255, 255, 255, 255}, func() error {
-		return win.Renderer().DrawLines([]sdl.Point{
-			start,
-			{X: start.X, Y: start.Y + 22*(SQUARE_HEIGHT+1)},
-			{X: start.X + 10*(SQUARE_WIDTH+1) + 1, Y: start.Y + 22*(SQUARE_HEIGHT+1)},
-			{X: start.X + 10*(SQUARE_WIDTH+1) + 1, Y: start.Y},
-		})
-	})
+	err := win.Renderer().DrawLines([]sdl2.Point{
+		start,
+		{X: start.X, Y: start.Y + 22*(SQUARE_HEIGHT+1)},
+		{X: start.X + 10*(SQUARE_WIDTH+1) + 1, Y: start.Y + 22*(SQUARE_HEIGHT+1)},
+		{X: start.X + 10*(SQUARE_WIDTH+1) + 1, Y: start.Y},
+	}, sdl2.Color{255, 255, 255, 255})
 	if nil != err {
 		return err
 	}
 
-	err = win.Renderer().CustomDrawColor(sdl.Color{R: 255, A: 255}, func() error {
-		return win.Renderer().DrawLine(sdl.Point{
-			X: start.X,
-			Y: start.Y + 2*(SQUARE_HEIGHT+1),
-		}, sdl.Point{
-			X: start.X + 10*(SQUARE_WIDTH+1) + 1,
-			Y: start.Y + 2*(SQUARE_HEIGHT+1),
-		})
-	})
+	err = win.Renderer().DrawLine(sdl2.Point{
+		X: start.X,
+		Y: start.Y + 2*(SQUARE_HEIGHT+1),
+	}, sdl2.Point{
+		X: start.X + 10*(SQUARE_WIDTH+1) + 1,
+		Y: start.Y + 2*(SQUARE_HEIGHT+1),
+	}, sdl2.Color{R: 255, A: 255})
 	if nil != err {
 		return err
 	}
 
 	tetromino := p.tetris.CurrentTetromino
 	coord := tetromino.Center
-	err = p.displayTetromino(win, tetromino, sdl.Point{
+	err = p.displayTetromino(win, tetromino, sdl2.Point{
 		X: start.X + int32(1+coord.X*(SQUARE_WIDTH+1)),
 		Y: start.Y + int32(1+coord.Y*(SQUARE_HEIGHT+1)),
 	})
@@ -143,10 +148,10 @@ func (p Play) displayBoard(win *window) error {
 	}
 
 	for _, square := range p.tetris.Board.Squares {
-		err = p.displayBlock(win, sdl.Point{
+		err = p.displayBlock(win, sdl2.Point{
 			X: start.X + int32(1+square.X*(SQUARE_WIDTH+1)),
 			Y: start.Y + int32(1+square.Y*(SQUARE_HEIGHT+1)),
-		}, sdl.Color{
+		}, sdl2.Color{
 			R: square.Color.R,
 			G: square.Color.G,
 			B: square.Color.B,
@@ -159,14 +164,14 @@ func (p Play) displayBoard(win *window) error {
 	return nil
 }
 
-func (p Play) displayNextTetromino(win *window) error {
-	rectCoord := sdl.Point{
+func (p Play) displayNextTetromino(win *sdl.Window) error {
+	rectCoord := sdl2.Point{
 		X: 2000,
 		Y: 1200,
 	}
 
 	tetromino := p.tetris.NextTetromino
-	err := p.displayTetromino(win, tetromino, sdl.Point{
+	err := p.displayTetromino(win, tetromino, sdl2.Point{
 		X: rectCoord.X + 2*(SQUARE_WIDTH+1),
 		Y: rectCoord.Y + 2*(SQUARE_HEIGHT+1),
 	})
@@ -174,25 +179,22 @@ func (p Play) displayNextTetromino(win *window) error {
 		return err
 	}
 
-	return win.Renderer().CustomDrawColor(sdl.Color{255, 255, 255, 255}, func() error {
-		rect := sdl.Rect{
-			X: rectCoord.X,
-			Y: rectCoord.Y,
-			W: 6*(SQUARE_WIDTH+1) + 1,
-			H: 6*(SQUARE_HEIGHT+1) + 1,
-		}
-		return win.Renderer().DrawRect(&rect)
+	return win.Renderer().DrawRect(sdl2.Color{255, 255, 255, 255}, sdl2.Rect{
+		X: rectCoord.X,
+		Y: rectCoord.Y,
+		W: 6*(SQUARE_WIDTH+1) + 1,
+		H: 6*(SQUARE_HEIGHT+1) + 1,
 	})
 }
 
-func (p Play) displayTetromino(win *window, tetromino model.Tetromino, drawingCoordinates sdl.Point) error {
+func (p Play) displayTetromino(win *sdl.Window, tetromino model.Tetromino, drawingCoordinates sdl2.Point) error {
 	for _, coordinate := range tetromino.AbsoluteCoordinates() {
 		color := model.GetColor(tetromino.Type)
-		point := sdl.Point{
+		point := sdl2.Point{
 			X: drawingCoordinates.X + int32(coordinate.X*(SQUARE_WIDTH+1)),
 			Y: drawingCoordinates.Y + int32(coordinate.Y*(SQUARE_HEIGHT+1)),
 		}
-		err := p.displayBlock(win, point, sdl.Color{R: color.R, G: color.G, B: color.B, A: color.A})
+		err := p.displayBlock(win, point, sdl2.Color{R: color.R, G: color.G, B: color.B, A: color.A})
 		if nil != err {
 			return err
 		}
@@ -200,50 +202,49 @@ func (p Play) displayTetromino(win *window, tetromino model.Tetromino, drawingCo
 	return nil
 }
 
-func (p Play) displayBlock(win *window, point sdl.Point, color sdl.Color) error {
-	return win.Renderer().CustomDrawColor(color, func() error {
-		return win.Renderer().FillRect(&sdl.Rect{
-			X: point.X,
-			Y: point.Y,
-			W: SQUARE_WIDTH,
-			H: SQUARE_HEIGHT,
-		})
+func (p Play) displayBlock(win *sdl.Window, point sdl2.Point, color sdl2.Color) error {
+	return win.Renderer().FillRect(&sdl2.Rect{
+		X: point.X,
+		Y: point.Y,
+		W: SQUARE_WIDTH,
+		H: SQUARE_HEIGHT,
 	})
 }
 
-func (p Play) displayLevel(win *window) error {
+func (p Play) displayLevel(win *sdl.Window) error {
 	msg := fmt.Sprintf("Level: %d", p.tetris.Level())
-	return win.Renderer().Text(msg, TextStyleWithPos{
-		TextStyle: TextStyle{
+	return win.Renderer().Text(msg, sdl.TextStyleWithPos{
+		TextStyle: sdl.TextStyle{
 			FontName: FONT_TUSJ,
 			FontSize: 30,
-			Color:    sdl.Color{255, 255, 255, 255},
+			Color:    sdl2.Color{255, 255, 255, 255},
 		},
-		Position: sdl.Point{
+		Position: sdl2.Point{
 			X: 2000,
 			Y: 400,
 		},
 	})
 }
 
-func (p Play) displayLost(win *window) error {
+func (p Play) displayLost(win *sdl.Window) error {
 	msg := "Game Over"
-	style := TextStyle{
+	style := sdl.TextStyle{
 		FontName: FONT_TUSJ,
 		FontSize: 100,
-		Color:    sdl.Color{255, 255, 255, 255},
+		Color:    sdl2.Color{255, 255, 255, 255},
 	}
 
-	size, err := win.Renderer().TextureSize(msg, style)
+	size, err := win.Renderer().TextSize(msg, style)
 	if nil != err {
 		return err
 	}
 
-	gameOverY := (win.GetSize().H - size.H) / 2
-	err = win.Renderer().Text(msg, TextStyleWithPos{
+	winSize := win.Size()
+	gameOverY := (winSize.H - size.H) / 2
+	err = win.Renderer().Text(msg, sdl.TextStyleWithPos{
 		TextStyle: style,
-		Position: sdl.Point{
-			X: (win.GetSize().W - size.W) / 2,
+		Position: sdl2.Point{
+			X: (winSize.W - size.W) / 2,
 			Y: gameOverY,
 		},
 	})
@@ -252,28 +253,28 @@ func (p Play) displayLost(win *window) error {
 	}
 
 	msg = "Push ESC to go to main menu"
-	style = TextStyle{
+	style = sdl.TextStyle{
 		FontName: FONT_TUSJ,
 		FontSize: 50,
-		Color:    sdl.Color{255, 255, 255, 255},
+		Color:    sdl2.Color{255, 255, 255, 255},
 	}
 
-	size, err = win.Renderer().TextureSize(msg, style)
+	size, err = win.Renderer().TextSize(msg, style)
 	if nil != err {
 		return err
 	}
 
-	return win.Renderer().Text(msg, TextStyleWithPos{
+	return win.Renderer().Text(msg, sdl.TextStyleWithPos{
 		TextStyle: style,
-		Position: sdl.Point{
-			X: (win.GetSize().W - size.W) / 2,
+		Position: sdl2.Point{
+			X: (win.Size().W - size.W) / 2,
 			Y: gameOverY + 150,
 		},
 	})
 }
 
-func (p Play) squareSize() Size {
-	return Size{
+func (p Play) squareSize() sdl.Size {
+	return sdl.Size{
 		W: 20,
 		H: 20,
 	}

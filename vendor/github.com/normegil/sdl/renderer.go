@@ -95,9 +95,30 @@ func (r *Renderer) SetDrawColor(color sdl.Color) error {
 }
 
 // DrawLine will draw a line between the 2 specified points of the given color
-func (r *Renderer) DrawLine(source sdl.Point, target sdl.Point, color sdl.Color) error {
+func (r *Renderer) DrawLine(color sdl.Color, source sdl.Point, target sdl.Point) error {
 	return r.customDrawColor(color, func() error {
 		return r.Renderer.DrawLine(int(source.X), int(source.Y), int(target.X), int(target.Y))
+	})
+}
+
+// DrawLines will draw a line between the specified points of the given color
+func (r *Renderer) DrawLines(color sdl.Color, points []sdl.Point) error {
+	return r.customDrawColor(color, func() error {
+		return r.Renderer.DrawLines(points)
+	})
+}
+
+// DrawRect will draw a empty rectangle from the given go-sdl.Rect
+func (r *Renderer) DrawRect(color sdl.Color, rect sdl.Rect) error {
+	return r.customDrawColor(color, func() error {
+		return r.Renderer.DrawRect(&rect)
+	})
+}
+
+// FillRect will draw a filled rectangle from the given go-sdl.Rect
+func (r *Renderer) FillRect(color sdl.Color, rect sdl.Rect) error {
+	return r.customDrawColor(color, func() error {
+		return r.Renderer.FillRect(&rect)
 	})
 }
 
